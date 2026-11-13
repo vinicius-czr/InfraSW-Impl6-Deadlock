@@ -1,0 +1,13 @@
+# Binário e objetos de compilação
+banker
+*.o
+*.out
+
+# Diário de testes (não entra no repositório / entrega)
+TESTES.md
+
+# Arquivos de teste auxiliares que possam surgir durante o desenvolvimento
+customer_test*.txt
+commands_test*.txt
+result_test*.txt
+*.tmp
