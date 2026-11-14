@@ -14,4 +14,6 @@ typedef struct {
     Customer *customers;
 } BankerState;
 
+int banker_is_safe_state(const BankerState *state, int *safe_sequence);
+
 #endif

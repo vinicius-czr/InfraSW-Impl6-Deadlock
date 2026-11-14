@@ -113,6 +113,21 @@ int main(int argc, char **argv) {
         printf("\n");
     }
 
+        {
+        int *sequence = malloc(state.num_customers * sizeof(int));
+        int safe = banker_is_safe_state(&state, sequence);
+
+        printf("is_safe_state: %s\n", safe ? "seguro" : "inseguro");
+        if (safe) {
+            printf("sequencia segura:");
+            for (i = 0; i < state.num_customers; i++) {
+                printf(" %d", sequence[i]);
+            }
+            printf("\n");
+        }
+        free(sequence);
+    }
+    
     print_commands(&commands, state.num_resources);
 
     return 0;
