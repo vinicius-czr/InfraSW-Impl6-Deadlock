@@ -51,26 +51,6 @@ static int load_customers(BankerState *state, const char *path) {
     return 0;
 }
 
-static void print_commands(const CommandList *list, int num_resources) {
-    int i, j;
-
-    printf("commands.txt: %d comando(s)\n", list->count);
-    for (i = 0; i < list->count; i++) {
-        const Command *c = &list->items[i];
-
-        if (c->type == CMD_PRINT) {
-            printf("  [%d] *\n", i);
-            continue;
-        }
-
-        printf("  [%d] %s customer=%d values=", i, c->type == CMD_REQUEST ? "RQ" : "RL", c->customer_id);
-        for (j = 0; j < num_resources; j++) {
-            printf("%d ", c->values[j]);
-        }
-        printf("\n");
-    }
-}
-
 int main(int argc, char **argv) {
     BankerState state;
     CommandList commands;
@@ -127,8 +107,19 @@ int main(int argc, char **argv) {
         }
         free(sequence);
     }
-    
-    print_commands(&commands, state.num_resources);
+
+        for (i = 0; i < commands.count; i++) {
+        Command *c = &commands.items[i];
+        char msg[BANKER_MESSAGE_SIZE];
+
+        if (c->type == CMD_REQUEST) {
+            banker_request(&state, c->customer_id, c->values, msg);
+            printf("%s\n", msg);
+        } else if (c->type == CMD_RELEASE) {
+            banker_release(&state, c->customer_id, c->values, msg);
+            printf("%s\n", msg);
+        }
+    }
 
     return 0;
 }
