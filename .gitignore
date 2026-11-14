@@ -11,3 +11,8 @@ customer_test*.txt
 commands_test*.txt
 result_test*.txt
 *.tmp
+*:Zone.Identifier
+
+customer.txt
+commands.txt
+result.txt
