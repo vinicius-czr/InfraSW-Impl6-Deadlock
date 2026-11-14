@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c11 -g
-SRCS = main.c
+SRCS = main.c commands.c
 OBJS = $(SRCS:.c=.o)
 TARGET = banker
 

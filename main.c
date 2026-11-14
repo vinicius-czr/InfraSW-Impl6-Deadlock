@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "banker.h"
+#include "commands.h"
 
 static int load_customers(BankerState *state, const char *path) {
     FILE *f = fopen(path, "r");
@@ -50,8 +51,29 @@ static int load_customers(BankerState *state, const char *path) {
     return 0;
 }
 
+static void print_commands(const CommandList *list, int num_resources) {
+    int i, j;
+
+    printf("commands.txt: %d comando(s)\n", list->count);
+    for (i = 0; i < list->count; i++) {
+        const Command *c = &list->items[i];
+
+        if (c->type == CMD_PRINT) {
+            printf("  [%d] *\n", i);
+            continue;
+        }
+
+        printf("  [%d] %s customer=%d values=", i, c->type == CMD_REQUEST ? "RQ" : "RL", c->customer_id);
+        for (j = 0; j < num_resources; j++) {
+            printf("%d ", c->values[j]);
+        }
+        printf("\n");
+    }
+}
+
 int main(int argc, char **argv) {
     BankerState state;
+    CommandList commands;
     int i, j;
 
     if (argc < 2) {
@@ -66,6 +88,10 @@ int main(int argc, char **argv) {
     state.available = malloc(state.num_resources * sizeof(int));
     for (i = 0; i < state.num_resources; i++) {
         state.available[i] = atoi(argv[i + 1]);
+    }
+
+    if (commands_load(&commands, "commands.txt", state.num_resources) != 0) {
+        return 1;
     }
 
     printf("num_customers=%d num_resources=%d\n", state.num_customers, state.num_resources);
@@ -86,6 +112,8 @@ int main(int argc, char **argv) {
         }
         printf("\n");
     }
+
+    print_commands(&commands, state.num_resources);
 
     return 0;
 }
