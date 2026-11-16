@@ -51,10 +51,40 @@ static int load_customers(BankerState *state, const char *path) {
     return 0;
 }
 
+static void print_state_block(FILE *out, const BankerState *state) {
+    int i, j;
+    int m = state->num_resources;
+
+    fprintf(out, "MAXIMUM | ALLOCATION | NEED\n");
+    for (i = 0; i < state->num_customers; i++) {
+        Customer *c = &state->customers[i];
+
+        for (j = 0; j < m; j++) {
+            fprintf(out, j == 0 ? "%d" : " %d", c->maximum[j]);
+        }
+        fprintf(out, " | ");
+        for (j = 0; j < m; j++) {
+            fprintf(out, j == 0 ? "%d" : " %d", c->allocation[j]);
+        }
+        fprintf(out, " | ");
+        for (j = 0; j < m; j++) {
+            fprintf(out, j == 0 ? "%d" : " %d", c->need[j]);
+        }
+        fprintf(out, "\n");
+    }
+
+    fprintf(out, "AVAILABLE");
+    for (j = 0; j < m; j++) {
+        fprintf(out, " %d", state->available[j]);
+    }
+    fprintf(out, "\n");
+}
+
 int main(int argc, char **argv) {
     BankerState state;
     CommandList commands;
-    int i, j;
+    FILE *out;
+    int i;
 
     if (argc < 2) {
         fprintf(stderr, "Uso: %s <recurso_1> ... <recurso_N>\n", argv[0]);
@@ -74,52 +104,27 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    printf("num_customers=%d num_resources=%d\n", state.num_customers, state.num_resources);
-    printf("AVAILABLE:");
-    for (j = 0; j < state.num_resources; j++) {
-        printf(" %d", state.available[j]);
-    }
-    printf("\n");
-
-    for (i = 0; i < state.num_customers; i++) {
-        printf("customer %d MAXIMUM:", i);
-        for (j = 0; j < state.num_resources; j++) {
-            printf(" %d", state.customers[i].maximum[j]);
-        }
-        printf(" NEED:");
-        for (j = 0; j < state.num_resources; j++) {
-            printf(" %d", state.customers[i].need[j]);
-        }
-        printf("\n");
+    out = fopen("result.txt", "w");
+    if (out == NULL) {
+        fprintf(stderr, "Erro: nao foi possivel criar result.txt\n");
+        return 1;
     }
 
-        {
-        int *sequence = malloc(state.num_customers * sizeof(int));
-        int safe = banker_is_safe_state(&state, sequence);
-
-        printf("is_safe_state: %s\n", safe ? "seguro" : "inseguro");
-        if (safe) {
-            printf("sequencia segura:");
-            for (i = 0; i < state.num_customers; i++) {
-                printf(" %d", sequence[i]);
-            }
-            printf("\n");
-        }
-        free(sequence);
-    }
-
-        for (i = 0; i < commands.count; i++) {
+    for (i = 0; i < commands.count; i++) {
         Command *c = &commands.items[i];
         char msg[BANKER_MESSAGE_SIZE];
 
         if (c->type == CMD_REQUEST) {
             banker_request(&state, c->customer_id, c->values, msg);
-            printf("%s\n", msg);
+            fprintf(out, "%s\n", msg);
         } else if (c->type == CMD_RELEASE) {
             banker_release(&state, c->customer_id, c->values, msg);
-            printf("%s\n", msg);
+            fprintf(out, "%s\n", msg);
+        } else {
+            print_state_block(out, &state);
         }
     }
 
+    fclose(out);
     return 0;
 }
