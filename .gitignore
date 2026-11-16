@@ -18,3 +18,4 @@ commands.txt
 result.txt
 result_esperado.txt
 *.bak
+*.log
