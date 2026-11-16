@@ -4,11 +4,27 @@
 #include "banker.h"
 #include "commands.h"
 
+static int parse_int_strict(const char *s, int *out) {
+    char *endptr;
+    long v;
+
+    if (s == NULL || *s == '\0') {
+        return -1;
+    }
+    v = strtol(s, &endptr, 10);
+    if (*endptr != '\0') {
+        return -1;
+    }
+    *out = (int) v;
+    return 0;
+}
+
 static int load_customers(BankerState *state, const char *path) {
     FILE *f = fopen(path, "r");
     char line[256];
     int capacity = 8;
     int n = 0;
+    int expected_resources = -1;
 
     if (f == NULL) {
         fprintf(stderr, "Erro: nao foi possivel abrir %s\n", path);
@@ -23,12 +39,27 @@ static int load_customers(BankerState *state, const char *path) {
         char *token = strtok(line, ",\n");
 
         while (token != NULL) {
-            values[count++] = atoi(token);
+            int v;
+
+            if (count >= 32 || parse_int_strict(token, &v) != 0) {
+                fprintf(stderr, "Erro: %s esta em formato invalido\n", path);
+                fclose(f);
+                return -1;
+            }
+            values[count++] = v;
             token = strtok(NULL, ",\n");
         }
 
         if (count == 0) {
             continue;
+        }
+
+        if (expected_resources == -1) {
+            expected_resources = count;
+        } else if (count != expected_resources) {
+            fprintf(stderr, "Erro: %s esta em formato invalido\n", path);
+            fclose(f);
+            return -1;
         }
 
         if (n >= capacity) {
@@ -46,8 +77,14 @@ static int load_customers(BankerState *state, const char *path) {
         n++;
     }
 
-    state->num_customers = n;
     fclose(f);
+
+    if (n == 0) {
+        fprintf(stderr, "Erro: %s nao contem nenhum cliente\n", path);
+        return -1;
+    }
+
+    state->num_customers = n;
     return 0;
 }
 
@@ -91,7 +128,21 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    for (i = 1; i < argc; i++) {
+        int v;
+        if (parse_int_strict(argv[i], &v) != 0 || v < 0) {
+            fprintf(stderr, "Erro: argumento '%s' nao e um numero inteiro valido\n", argv[i]);
+            return 1;
+        }
+    }
+
     if (load_customers(&state, "customer.txt") != 0) {
+        return 1;
+    }
+
+    if (argc - 1 != state.num_resources) {
+        fprintf(stderr, "Erro: numero de argumentos (%d) nao bate com o numero de recursos em customer.txt (%d)\n",
+                argc - 1, state.num_resources);
         return 1;
     }
 
